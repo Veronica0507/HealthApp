@@ -303,7 +303,7 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
   }
 
   List<FlSpot> get currentWindow {
-    int start = index < 50 ? 0 : index - 50;
+    int start = index < 90 ? 0 : index - 90;
     return ecgData.sublist(start, index);
   }
 
@@ -328,6 +328,8 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
                       ? Center(child: CircularProgressIndicator())
                       : LineChart(
                         LineChartData(
+                          minY: -1.2,
+                          maxY: 1.2,
                           lineBarsData: [
                             LineChartBarData(
                               spots: currentWindow,
