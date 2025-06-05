@@ -1,4 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:csv/csv.dart';
 
 void main() {
   runApp(HealthApp());
@@ -40,7 +44,11 @@ class HomeScreen extends StatelessWidget {
           children: [
             Text(
               'Health App',
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black),
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
             SizedBox(height: 30),
             ElevatedButton(
@@ -48,9 +56,14 @@ class HomeScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.cyan,
                 padding: EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: Text('COMENZAR', style: TextStyle(color: Colors.white, fontSize: 18)),
+              child: Text(
+                'COMENZAR',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
             ),
           ],
         ),
@@ -78,9 +91,19 @@ class _RegistroScreenState extends State<RegistroScreen> {
         title: RichText(
           text: TextSpan(
             text: 'Health App ',
-            style: TextStyle(fontSize: 22, color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
             children: <TextSpan>[
-              TextSpan(text: 'Registro', style: TextStyle(color: Colors.cyan, fontWeight: FontWeight.normal))
+              TextSpan(
+                text: 'Registro',
+                style: TextStyle(
+                  color: Colors.cyan,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
             ],
           ),
         ),
@@ -117,10 +140,15 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.cyan,
                   padding: EdgeInsets.symmetric(horizontal: 50, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                child: Text('SIGUIENTE', style: TextStyle(color: Colors.white, fontSize: 16)),
-              )
+                child: Text(
+                  'SIGUIENTE',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
             ],
           ),
         ),
@@ -136,7 +164,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
           ),
           TextField(
             controller: controller,
@@ -165,9 +197,16 @@ class VariableScreen extends StatelessWidget {
         title: RichText(
           text: TextSpan(
             text: 'Health App ',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.black,
+            ),
             children: <TextSpan>[
-              TextSpan(text: 'Variable fisiológica', style: TextStyle(color: Colors.cyan))
+              TextSpan(
+                text: 'Variable fisiológica',
+                style: TextStyle(color: Colors.cyan),
+              ),
             ],
           ),
         ),
@@ -178,14 +217,17 @@ class VariableScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Señal Electrocardiograma', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            Text(
+              'Señal Electrocardiograma',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RecomendacionScreen(userData: userData),
+                    builder: (context) => ECGFromCSVScreen(userData: userData),
                   ),
                 );
               },
@@ -193,8 +235,11 @@ class VariableScreen extends StatelessWidget {
                 backgroundColor: Colors.cyan,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
-              child: Text('INICIAR TOMA', style: TextStyle(color: Colors.white, fontSize: 16)),
-            )
+              child: Text(
+                'INICIAR TOMA',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
           ],
         ),
       ),
@@ -202,48 +247,135 @@ class VariableScreen extends StatelessWidget {
   }
 }
 
-class RecomendacionScreen extends StatelessWidget {
+class ECGFromCSVScreen extends StatefulWidget {
   final UserData userData;
+  ECGFromCSVScreen({required this.userData});
 
-  RecomendacionScreen({required this.userData});
+  @override
+  _ECGFromCSVScreenState createState() => _ECGFromCSVScreenState();
+}
+
+class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
+  List<FlSpot> ecgData = [];
+  int index = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    loadCSV();
+  }
+
+  Future<void> loadCSV() async {
+    final rawData = await rootBundle.loadString('assets/ecg_simulation.csv');
+    final lines = rawData.split('\n');
+
+    List<FlSpot> parsedData = [];
+    for (int i = 0; i < lines.length; i++) {
+      final value = lines[i].trim();
+      if (value.isNotEmpty) {
+        final y = double.tryParse(value);
+        if (y != null) {
+          parsedData.add(FlSpot(i.toDouble(), y));
+        }
+      }
+    }
+
+    setState(() {
+      ecgData = parsedData;
+    });
+
+    _timer = Timer.periodic(Duration(milliseconds: 50), (timer) {
+      if (index + 50 < ecgData.length) {
+        setState(() {
+          index += 1;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  List<FlSpot> get currentWindow {
+    int start = index < 50 ? 0 : index - 50;
+    return ecgData.sublist(start, index);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Health App Recomendación', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Health App Recomendación'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(25.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.monitor_heart, size: 80, color: Colors.teal),
-              SizedBox(height: 20),
-              Text('Edad: ${userData.edad} años', style: TextStyle(fontSize: 18)),
-              Text('Género: ${userData.genero}', style: TextStyle(fontSize: 18)),
-              SizedBox(height: 20),
-              Text(
-                '${userData.usuario}, recuerda compartir esta señal con tu médico si es necesario.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () => Navigator.popUntil(context, ModalRoute.withName('/')),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyan,
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 25.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: 200,
+              child:
+                  ecgData.isEmpty
+                      ? Center(child: CircularProgressIndicator())
+                      : LineChart(
+                        LineChartData(
+                          lineBarsData: [
+                            LineChartBarData(
+                              spots: currentWindow,
+                              isCurved: false,
+                              color: Colors.teal,
+                              barWidth: 2,
+                              dotData: FlDotData(show: false),
+                            ),
+                          ],
+                          titlesData: FlTitlesData(show: false),
+                          borderData: FlBorderData(show: false),
+                          gridData: FlGridData(show: false),
+                        ),
+                      ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Edad: ${widget.userData.edad} años',
+              style: TextStyle(fontSize: 18),
+            ),
+            Text(
+              'Género: ${widget.userData.genero}',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 20),
+            Text(
+              '${widget.userData.usuario}, recuerda compartir esta señal con tu médico si es necesario.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.popUntil(context, ModalRoute.withName('/'));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.cyan,
+                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text('FINALIZAR', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
-            ],
-          ),
+              child: Text(
+                'FINALIZAR',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ],
         ),
       ),
     );
