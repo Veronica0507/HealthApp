@@ -78,10 +78,10 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
-  final TextEditingController userController = TextEditingController();
-  final TextEditingController ageController = TextEditingController();
-  final TextEditingController genderController = TextEditingController();
-  final TextEditingController jobController = TextEditingController();
+  final userController = TextEditingController();
+  final ageController = TextEditingController();
+  final genderController = TextEditingController();
+  final jobController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -91,19 +91,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
         title: RichText(
           text: TextSpan(
             text: 'Health App ',
-            style: TextStyle(
-              fontSize: 22,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-            children: <TextSpan>[
-              TextSpan(
-                text: 'Registro',
-                style: TextStyle(
-                  color: Colors.cyan,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
+            style: TextStyle(fontSize: 22, color: Colors.black, fontWeight: FontWeight.bold),
+            children: [
+              TextSpan(text: 'Registro', style: TextStyle(color: Colors.cyan)),
             ],
           ),
         ),
@@ -115,16 +105,15 @@ class _RegistroScreenState extends State<RegistroScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 30.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              buildLabeledField('Nombre de usuario', userController),
-              buildLabeledField('Edad', ageController),
-              buildLabeledField('Género', genderController),
-              buildLabeledField('Ocupación', jobController),
+              buildField('Nombre de usuario', userController),
+              buildField('Edad', ageController),
+              buildField('Género', genderController),
+              buildField('Ocupación', jobController),
               SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () {
-                  final userData = UserData(
+                  final data = UserData(
                     userController.text,
                     ageController.text,
                     genderController.text,
@@ -132,22 +121,15 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   );
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => VariableScreen(userData: userData),
-                    ),
+                    MaterialPageRoute(builder: (_) => VariableScreen(userData: data)),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.cyan,
                   padding: EdgeInsets.symmetric(horizontal: 50, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text(
-                  'SIGUIENTE',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
+                child: Text('SIGUIENTE', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ],
           ),
@@ -156,38 +138,57 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
-  Widget buildLabeledField(String label, TextEditingController controller) {
+  Widget buildField(String label, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black)),
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.cyan, width: 2),
             ),
           ),
-          TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.cyan, width: 2),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
 
-class VariableScreen extends StatelessWidget {
+class VariableScreen extends StatefulWidget {
   final UserData userData;
-
   VariableScreen({required this.userData});
+
+  @override
+  _VariableScreenState createState() => _VariableScreenState();
+}
+
+class _VariableScreenState extends State<VariableScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+
+    _scaleAnimation =
+        Tween<double>(begin: 1.0, end: 1.3).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,17 +198,8 @@ class VariableScreen extends StatelessWidget {
         title: RichText(
           text: TextSpan(
             text: 'Health App ',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.black,
-            ),
-            children: <TextSpan>[
-              TextSpan(
-                text: 'Variable fisiológica',
-                style: TextStyle(color: Colors.cyan),
-              ),
-            ],
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black),
+            children: [TextSpan(text: 'Variable fisiológica', style: TextStyle(color: Colors.cyan))],
           ),
         ),
         backgroundColor: Colors.white,
@@ -217,28 +209,25 @@ class VariableScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Señal Electrocardiograma',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Icon(Icons.favorite, color: Colors.redAccent, size: 60),
             ),
+            SizedBox(height: 20),
+            Text('Señal Electrocardiograma', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ECGFromCSVScreen(userData: userData),
-                  ),
+                  MaterialPageRoute(builder: (_) => ECGFromCSVScreen(userData: widget.userData)),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.cyan,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
-              child: Text(
-                'INICIAR TOMA',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+              child: Text('INICIAR TOMA', style: TextStyle(color: Colors.white, fontSize: 16)),
             ),
           ],
         ),
@@ -270,26 +259,15 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
     final rawData = await rootBundle.loadString('assets/ecg_simulation.csv');
     final lines = rawData.split('\n');
 
-    List<FlSpot> parsedData = [];
+    ecgData = [];
     for (int i = 0; i < lines.length; i++) {
-      final value = lines[i].trim();
-      if (value.isNotEmpty) {
-        final y = double.tryParse(value);
-        if (y != null) {
-          parsedData.add(FlSpot(i.toDouble(), y));
-        }
-      }
+      final y = double.tryParse(lines[i].trim());
+      if (y != null) ecgData.add(FlSpot(i.toDouble(), y));
     }
-
-    setState(() {
-      ecgData = parsedData;
-    });
 
     _timer = Timer.periodic(Duration(milliseconds: 50), (timer) {
       if (index + 50 < ecgData.length) {
-        setState(() {
-          index += 1;
-        });
+        setState(() => index += 1);
       } else {
         timer.cancel();
       }
@@ -309,9 +287,16 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final u = widget.userData;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Health App Recomendación'),
+        title: RichText(
+          text: TextSpan(
+            text: 'Health App ',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black),
+            children: [TextSpan(text: 'Recomendación', style: TextStyle(color: Colors.cyan))],
+          ),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
@@ -323,59 +308,44 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
           children: [
             Container(
               height: 200,
-              child:
-                  ecgData.isEmpty
-                      ? Center(child: CircularProgressIndicator())
-                      : LineChart(
-                        LineChartData(
-                          minY: -1.2,
-                          maxY: 1.2,
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: currentWindow,
-                              isCurved: false,
-                              color: Colors.teal,
-                              barWidth: 2,
-                              dotData: FlDotData(show: false),
-                            ),
-                          ],
-                          titlesData: FlTitlesData(show: false),
-                          borderData: FlBorderData(show: false),
-                          gridData: FlGridData(show: false),
-                        ),
+              child: ecgData.isEmpty
+                  ? Center(child: CircularProgressIndicator())
+                  : LineChart(
+                      LineChartData(
+                        minY: -1.2,
+                        maxY: 1.2,
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: currentWindow,
+                            isCurved: false,
+                            color: Colors.teal,
+                            barWidth: 2,
+                            dotData: FlDotData(show: false),
+                          ),
+                        ],
+                        titlesData: FlTitlesData(show: false),
+                        borderData: FlBorderData(show: false),
+                        gridData: FlGridData(show: false),
                       ),
+                    ),
             ),
             SizedBox(height: 20),
-            Text(
-              'Edad: ${widget.userData.edad} años',
-              style: TextStyle(fontSize: 18),
-            ),
-            Text(
-              'Género: ${widget.userData.genero}',
-              style: TextStyle(fontSize: 18),
-            ),
+            Text('Edad: ${u.edad} años', style: TextStyle(fontSize: 18)),
+            Text('Género: ${u.genero}', style: TextStyle(fontSize: 18)),
             SizedBox(height: 20),
-            Text(
-              '${widget.userData.usuario}, recuerda compartir esta señal con tu médico si es necesario.',
+            Text('${u.usuario}, recuerda compartir esta señal con tu médico si es necesario.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
-                Navigator.popUntil(context, ModalRoute.withName('/'));
-              },
+              onPressed: () => Navigator.popUntil(context, ModalRoute.withName('/')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.cyan,
                 padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: Text(
-                'FINALIZAR',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+              child: Text('FINALIZAR', style: TextStyle(color: Colors.white, fontSize: 16)),
             ),
           ],
         ),
