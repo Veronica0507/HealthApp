@@ -38,34 +38,51 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Health App',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            children: [
+              const Spacer(),
+              Text(
+                'Health App',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/registro'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyan,
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () => Navigator.pushNamed(context, '/registro'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.cyan,
+                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'COMENZAR',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
-              child: Text(
-                'COMENZAR',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Text(
+                  'Viendo por tu salud',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
