@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:csv/csv.dart';
 
 void main() {
   runApp(HealthApp());
@@ -33,6 +32,10 @@ class UserData {
   UserData(this.usuario, this.edad, this.genero, this.ocupacion);
 }
 
+const double ecgMaxY = 1.2;
+const Duration refreshRate = Duration(milliseconds: 50);
+const Color primaryColor = Colors.cyan;
+
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -43,43 +46,28 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-              Text(
-                'Health App',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text('Health App',
+                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
               SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () => Navigator.pushNamed(context, '/registro'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyan,
+                  backgroundColor: primaryColor,
                   padding: EdgeInsets.symmetric(horizontal: 50, vertical: 18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(
-                  'COMENZAR',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
+                child: Text('COMENZAR', style: TextStyle(fontSize: 18)),
               ),
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(bottom: 20.0),
-                child: Text(
-                  'Viendo por tu salud',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                child: Text('Viendo por tu salud',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[700])),
               ),
             ],
           ),
@@ -95,6 +83,7 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
+  final _formKey = GlobalKey<FormState>();
   final userController = TextEditingController();
   final ageController = TextEditingController();
   final genderController = TextEditingController();
@@ -105,15 +94,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: RichText(
-          text: TextSpan(
-            text: 'Health App ',
-            style: TextStyle(fontSize: 22, color: Colors.black, fontWeight: FontWeight.bold),
-            children: [
-              TextSpan(text: 'Registro', style: TextStyle(color: Colors.cyan)),
-            ],
-          ),
-        ),
+        title: Text('Health App Registro'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -121,50 +102,66 @@ class _RegistroScreenState extends State<RegistroScreen> {
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 30.0),
-          child: Column(
-            children: [
-              buildField('Nombre de usuario', userController),
-              buildField('Edad', ageController),
-              buildField('Género', genderController),
-              buildField('Ocupación', jobController),
-              SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  final data = UserData(
-                    userController.text,
-                    ageController.text,
-                    genderController.text,
-                    jobController.text,
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => VariableScreen(userData: data)),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyan,
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                buildField('Nombre de usuario', userController),
+                buildField('Edad', ageController, isNumber: true),
+                buildField('Género', genderController),
+                buildField('Ocupación', jobController),
+                SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      final data = UserData(
+                        userController.text,
+                        ageController.text,
+                        genderController.text,
+                        jobController.text,
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => VariableScreen(userData: data)),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child:
+                      Text('SIGUIENTE', style: TextStyle(fontSize: 16)),
                 ),
-                child: Text('SIGUIENTE', style: TextStyle(color: Colors.white, fontSize: 16)),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget buildField(String label, TextEditingController controller) {
+  Widget buildField(String label, TextEditingController controller,
+      {bool isNumber = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black)),
-        TextField(
+        Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        TextFormField(
           controller: controller,
+          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Este campo es requerido';
+            }
+            return null;
+          },
           decoration: InputDecoration(
             focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.cyan, width: 2),
+              borderSide: BorderSide(color: primaryColor, width: 2),
             ),
           ),
         ),
@@ -212,13 +209,7 @@ class _VariableScreenState extends State<VariableScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: RichText(
-          text: TextSpan(
-            text: 'Health App ',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black),
-            children: [TextSpan(text: 'Variable fisiológica', style: TextStyle(color: Colors.cyan))],
-          ),
-        ),
+        title: Text('Variable fisiológica'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
@@ -231,20 +222,22 @@ class _VariableScreenState extends State<VariableScreen>
               child: Icon(Icons.favorite, color: Colors.redAccent, size: 60),
             ),
             SizedBox(height: 20),
-            Text('Señal Electrocardiograma', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            Text('Señal Electrocardiograma',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => ECGFromCSVScreen(userData: widget.userData)),
+                  MaterialPageRoute(
+                      builder: (_) => ECGFromCSVScreen(userData: widget.userData)),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyan,
+                backgroundColor: primaryColor,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
-              child: Text('INICIAR TOMA', style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: Text('INICIAR TOMA', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -282,7 +275,7 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
       if (y != null) ecgData.add(FlSpot(i.toDouble(), y));
     }
 
-    _timer = Timer.periodic(Duration(milliseconds: 50), (timer) {
+    _timer = Timer.periodic(refreshRate, (timer) {
       if (index + 50 < ecgData.length) {
         setState(() => index += 1);
       } else {
@@ -307,13 +300,7 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
     final u = widget.userData;
     return Scaffold(
       appBar: AppBar(
-        title: RichText(
-          text: TextSpan(
-            text: 'Health App ',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black),
-            children: [TextSpan(text: 'Recomendación', style: TextStyle(color: Colors.cyan))],
-          ),
-        ),
+        title: Text('Recomendación'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
@@ -329,12 +316,12 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
                   ? Center(child: CircularProgressIndicator())
                   : LineChart(
                       LineChartData(
-                        minY: -1.2,
-                        maxY: 1.2,
+                        minY: -ecgMaxY,
+                        maxY: ecgMaxY,
                         lineBarsData: [
                           LineChartBarData(
                             spots: currentWindow,
-                            isCurved: false,
+                            isCurved: true,
                             color: Colors.teal,
                             barWidth: 2,
                             dotData: FlDotData(show: false),
@@ -351,18 +338,17 @@ class _ECGFromCSVScreenState extends State<ECGFromCSVScreen> {
             Text('Género: ${u.genero}', style: TextStyle(fontSize: 18)),
             SizedBox(height: 20),
             Text('${u.usuario}, recuerda compartir esta señal con tu médico si es necesario.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () => Navigator.popUntil(context, ModalRoute.withName('/')),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyan,
+                backgroundColor: primaryColor,
                 padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
-              child: Text('FINALIZAR', style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: Text('FINALIZAR', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
